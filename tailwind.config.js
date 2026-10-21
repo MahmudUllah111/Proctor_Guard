@@ -8,6 +8,7 @@ export default {
         './resources/**/*.blade.php',
         './resources/**/*.js',
         './public/js/**/*.js',
+        './app/**/*.php',
     ],
     theme: {
         extend: {
@@ -16,6 +17,7 @@ export default {
                 mono: ['"JetBrains Mono"', ...defaultTheme.fontFamily.mono],
             },
             boxShadow: {
+                'soft': '0 2px 10px -2px rgba(15, 23, 42, 0.04), 0 1px 3px -1px rgba(15, 23, 42, 0.02)',
                 'ambient': '0 1px 3px rgba(15, 23, 42, 0.03), 0 2px 8px rgba(15, 23, 42, 0.04)',
                 'card': '0 1px 3px 0 rgba(15, 23, 42, 0.03), 0 6px 16px -2px rgba(15, 23, 42, 0.04)',
                 'elevation': '0 10px 30px -4px rgba(15, 23, 42, 0.08), 0 4px 10px -2px rgba(15, 23, 42, 0.03)',

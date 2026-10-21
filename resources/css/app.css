@@ -22,6 +22,45 @@
     }
 }
 
+/* Admin design primitives: one source for buttons, inputs, tables, pills */
+@layer components {
+    .card { @apply bg-white border border-slate-200 rounded-xl shadow-soft; }
+    .card-header { @apply flex items-center justify-between gap-4 px-5 py-4 border-b border-slate-100; }
+    .card-title { @apply text-[13px] font-semibold text-slate-900 tracking-tight; }
+    .card-subtitle { @apply text-xs text-slate-500 mt-0.5; }
+
+    .btn { @apply inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold whitespace-nowrap transition focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:ring-offset-1; }
+    .btn-primary { @apply btn bg-indigo-600 text-white shadow-sm hover:bg-indigo-700; }
+    .btn-secondary { @apply btn bg-white text-slate-700 border border-slate-200 shadow-sm hover:bg-slate-50 hover:text-slate-900; }
+    .btn-ghost { @apply btn text-slate-600 hover:bg-slate-100 hover:text-slate-900; }
+
+    /* 32x32 square micro-action; tone set via data-tone for distinct hover accents */
+    .icon-btn { @apply inline-flex items-center justify-center w-8 h-8 shrink-0 rounded-lg border border-transparent text-slate-500 transition hover:border-slate-200 hover:bg-slate-50 hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40; }
+    .icon-btn[data-tone="primary"] { @apply hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-200; }
+    .icon-btn[data-tone="warning"] { @apply hover:bg-amber-50 hover:text-amber-700 hover:border-amber-200; }
+    .icon-btn[data-tone="danger"] { @apply hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200; }
+    .icon-btn[data-tone="success"] { @apply hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200; }
+    .icon-group { @apply inline-flex items-center justify-end gap-0.5; }
+
+    .input { @apply block w-full h-9 px-3 bg-white border border-slate-200 rounded-lg text-xs text-slate-900 placeholder-slate-400 shadow-sm transition focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500; }
+    .select { @apply input appearance-none pr-9 cursor-pointer; }
+
+    .data-table { @apply w-full text-left text-xs; }
+    .data-table thead th { @apply h-10 px-4 first:pl-5 last:pr-5 bg-slate-50/70 border-b border-slate-200 text-[10.5px] font-semibold uppercase tracking-[0.06em] text-slate-500 whitespace-nowrap; }
+    .data-table tbody td { @apply px-4 first:pl-5 last:pr-5 py-3 align-middle text-slate-600; }
+    .data-table tbody tr { @apply border-b border-slate-100 last:border-0 transition-colors hover:bg-slate-50/60; }
+
+    .pill { @apply inline-flex items-center gap-1.5 h-5 px-2 rounded-md border text-[10.5px] font-semibold whitespace-nowrap; }
+    .pill-slate { @apply pill bg-slate-50 text-slate-600 border-slate-200; }
+    .pill-indigo { @apply pill bg-indigo-50 text-indigo-700 border-indigo-200/70; }
+    .pill-emerald { @apply pill bg-emerald-50 text-emerald-700 border-emerald-200/70; }
+    .pill-amber { @apply pill bg-amber-50 text-amber-800 border-amber-200/70; }
+    .pill-rose { @apply pill bg-rose-50 text-rose-700 border-rose-200/70; }
+
+    .num { @apply font-mono tabular-nums; }
+    .token-chip { @apply inline-flex items-center h-6 px-2 rounded-md bg-slate-100 border border-slate-200 font-mono text-[11px] text-slate-700; }
+}
+
 /* Staggered entrance animations */
 @keyframes entranceFadeUp {
     0% {

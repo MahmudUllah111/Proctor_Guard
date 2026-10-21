@@ -63,8 +63,6 @@ class ProctoringLedgerController extends Controller
             ->get();
 
         $data = $sessions->map(function ($s) {
-            $isHeartbeatRecent = $s->last_heartbeat_at && Carbon::parse($s->last_heartbeat_at)->diffInSeconds(now()) < 30;
-
             return [
                 'id' => $s->id,
                 'token' => $s->session_token,
@@ -74,19 +72,13 @@ class ProctoringLedgerController extends Controller
                 'exam_title' => $s->exam->title ?? 'N/A',
                 'course_code' => $s->exam->course_code ?? 'N/A',
                 'status' => $s->status,
-                'status_label' => match($s->status) {
-                    'waiting_room' => 'Waiting Room',
-                    'in_progress' => 'Active Test',
-                    'completed' => 'Submitted',
-                    'terminated_cheat' => 'Terminated (Cheat)',
-                    default => ucfirst($s->status),
-                },
+                'status_label' => $s->status_label,
                 'strikes_count' => $s->strikes_count,
                 'max_strikes' => $s->max_strikes,
                 'remaining_seconds' => $s->remainingSeconds(),
-                'ip_address' => $s->ip_address ?? '127.0.0.1',
+                'ip_address' => $s->ip_address,
                 'last_heartbeat' => $s->last_heartbeat_at ? $s->last_heartbeat_at->diffForHumans() : 'Never',
-                'is_online' => $isHeartbeatRecent,
+                'is_online' => $s->isOnline(),
                 'infractions_count' => $s->infractions->count(),
                 'termination_reason' => $s->termination_reason,
             ];

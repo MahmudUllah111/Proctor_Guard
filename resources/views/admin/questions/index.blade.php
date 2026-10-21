@@ -5,46 +5,34 @@
 @section('page_subtitle', $exam->course_code . ' • ' . $questions->count() . ' Total Questions • ' . $exam->totalPoints() . ' Total Points')
 
 @section('topbar_actions')
-    <div class="flex items-center gap-3">
-        <a href="{{ route('admin.exams.index') }}" class="px-3.5 py-1.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 text-xs font-semibold border border-slate-200 shadow-sm transition">
-            &larr; Exams
-        </a>
-        <a href="{{ route('admin.exams.questions.create', $exam) }}" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs rounded-xl shadow-sm transition flex items-center gap-1.5">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-            Add Question
-        </a>
-    </div>
+    <a href="{{ route('admin.exams.index') }}" class="btn-secondary"><x-icon name="arrow-left" class="w-3.5 h-3.5" />Exams</a>
+    <a href="{{ route('admin.exams.questions.create', $exam) }}" class="btn-primary"><x-icon name="plus" class="w-3.5 h-3.5" />Add question</a>
 @endsection
 
 @section('content')
-<div class="space-y-6">
-
-    <div class="space-y-4">
+<div>
+    <div class="space-y-3">
         @forelse($questions as $index => $q)
-            <div class="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-sm hover:border-slate-300 transition">
+            <div class="card p-5">
                 <div class="flex items-start justify-between gap-4 mb-4">
                     <div class="flex items-center gap-2.5">
-                        <span class="w-8 h-8 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-700 font-bold text-xs flex items-center justify-center">
-                            #{{ $index + 1 }}
+                        <span class="w-8 h-8 rounded-lg bg-slate-100 text-slate-700 font-semibold text-xs flex items-center justify-center num">
+                            {{ $index + 1 }}
                         </span>
-                        <span class="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 font-semibold text-[11px] border border-slate-200">
+                        <span class="pill-indigo">
                             {{ ucfirst(str_replace('_', ' ', $q->question_type)) }}
                         </span>
-                        <span class="px-2.5 py-0.5 rounded-full bg-slate-50 text-slate-600 border border-slate-200 font-semibold text-[11px]">
+                        <span class="pill-slate num">
                             {{ $q->points }} Point{{ $q->points > 1 ? 's' : '' }}
                         </span>
                     </div>
 
-                    <div class="flex items-center gap-2">
-                        <a href="{{ route('admin.exams.questions.edit', [$exam, $q]) }}" class="px-3 py-1.5 rounded-lg bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 text-xs font-semibold border border-slate-200 shadow-sm transition">
-                            Edit
-                        </a>
+                    <div class="icon-group">
+                        <x-icon-button :href="route('admin.exams.questions.edit', [$exam, $q])" icon="pencil" label="Edit question" tone="primary" />
                         <form action="{{ route('admin.exams.questions.destroy', [$exam, $q]) }}" method="POST" onsubmit="return confirm('Delete this question?')">
                             @csrf
                             @method('DELETE')
-                            <button type="submit" class="px-3 py-1.5 rounded-lg text-rose-600 hover:bg-rose-50 text-xs font-semibold transition">
-                                Delete
-                            </button>
+                            <x-icon-button type="submit" icon="trash-2" label="Delete question" tone="danger" />
                         </form>
                     </div>
                 </div>

@@ -99,6 +99,34 @@ class ExamSession extends Model
         return $this->status === 'terminated_cheat';
     }
 
+    public function getStatusLabelAttribute(): string
+    {
+        return match ($this->status) {
+            'waiting_room' => 'Waiting Room',
+            'in_progress' => 'Active Test',
+            'completed' => 'Submitted',
+            'terminated_cheat' => 'Terminated (Cheat)',
+            default => ucfirst(str_replace('_', ' ', $this->status)),
+        };
+    }
+
+    /** Full .pill-* class (kept literal so Tailwind's content scan keeps it). */
+    public function getStatusPillAttribute(): string
+    {
+        return match ($this->status) {
+            'waiting_room' => 'pill-amber',
+            'in_progress' => 'pill-indigo',
+            'completed' => 'pill-emerald',
+            'terminated_cheat' => 'pill-rose',
+            default => 'pill-slate',
+        };
+    }
+
+    public function isOnline(): bool
+    {
+        return $this->last_heartbeat_at && $this->last_heartbeat_at->diffInSeconds(now()) < 30;
+    }
+
     public function isCompleted(): bool
     {
         return in_array($this->status, ['completed', 'terminated_cheat']);
