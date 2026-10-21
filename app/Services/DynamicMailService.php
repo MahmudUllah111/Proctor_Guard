@@ -80,10 +80,8 @@ class DynamicMailService
                 'body_html' => "<h2>Hello {$data['student_name']},</h2><p>Your examination result for <strong>{$data['exam_title']}</strong> is: {$data['score']}/{$data['max_score']} ({$data['percentage']}%). Status: {$data['status_text']}.</p>",
             ];
 
-            Mail::html($rendered['body_html'], function ($message) use ($session, $rendered) {
-                $message->to($session->student_email, $session->student_name)
-                    ->subject($rendered['subject']);
-            });
+            Mail::to($session->student_email, $session->student_name)
+                ->queue(new \App\Mail\ExamResultMailable($session, $rendered));
 
             $session->update(['email_report_dispatched' => true]);
 

@@ -18,6 +18,7 @@ return new class extends Migration
             $table->string('ip_address', 45)->nullable();
             $table->text('user_agent')->nullable();
             $table->string('status')->default('waiting_room'); // waiting_room, in_progress, completed, terminated_cheat
+            $table->index(['student_id_code', 'exam_id', 'status']);
             $table->decimal('score', 6, 2)->default(0.00);
             $table->decimal('max_score', 6, 2)->default(0.00);
             $table->decimal('percentage', 5, 2)->default(0.00);
