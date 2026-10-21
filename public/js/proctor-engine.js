@@ -1,8 +1,8 @@
 /**
  * Enterprise Anti-Cheat Proctoring Engine & HTML5 Canvas Renderer
  * Architecture:
- *  1. Dynamic Watermark Canvas Layer (Timestamp, Name, ID, IP)
- *  2. Question & Code Snippet Pixel Buffer Canvas Renderer
+ *  1. Dynamic Faint Watermark Canvas Layer (Timestamp, Name, ID, IP)
+ *  2. Question & Code Snippet Pixel Buffer Canvas Renderer (Light Paper Mode)
  *  3. Client Hardening (Shortcuts, Context Menu, DevTools, Visibility, Blur)
  *  4. Strike Management, Heartbeat & Auto-Termination
  */
@@ -21,7 +21,8 @@ class ProctorEngine {
         this.remainingSeconds = config.remainingSeconds || 0;
         this.submitUrl = config.submitUrl || '';
         this.resultUrl = config.resultUrl || '';
-        this.watermarkOpacity = config.watermarkOpacity || 0.12;
+        // Calm watermark opacity to prevent eye fatigue while remaining clear for photos
+        this.watermarkOpacity = config.watermarkOpacity !== undefined ? config.watermarkOpacity : 0.05;
         this.enforceFullscreen = config.enforceFullscreen !== false;
 
         this.questions = [];
@@ -48,7 +49,7 @@ class ProctorEngine {
     }
 
     /**
-     * 1. HTML5 Canvas Dynamic Semi-Transparent Watermark Layer
+     * 1. HTML5 Canvas Dynamic Faint Watermark Layer
      * Renders a real-time updating diagonal forensic grid over the viewport.
      */
     setupWatermarkCanvas() {
@@ -95,14 +96,14 @@ class ProctorEngine {
             const timeStr = now.toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
             const watermarkText = `${this.studentName} • ${this.studentId} • ${this.ipAddress} • ${timeStr}`;
 
-            ctx.font = 'bold 15px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace';
+            ctx.font = 'bold 14px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace';
             ctx.fillStyle = '#0f172a';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
 
-            const stepX = 360;
-            const stepY = 180;
-            const angle = -25 * Math.PI / 180;
+            const stepX = 380;
+            const stepY = 190;
+            const angle = -22 * Math.PI / 180;
 
             for (let y = -h; y < h * 2; y += stepY) {
                 for (let x = -w; x < w * 2; x += stepX) {
@@ -124,8 +125,8 @@ class ProctorEngine {
     }
 
     /**
-     * 2. HTML5 Canvas Question & Code Snippet Pixel Buffer Renderer
-     * Completely prevents browser AI extensions (ChatGPT, Monica, Copilot) from scraping DOM text!
+     * 2. HTML5 Canvas Question & Code Snippet Pixel Buffer Renderer (Light Paper Mode)
+     * Renders directly into canvas pixel buffer to prevent AI extension scraping.
      */
     renderQuestionOnCanvas(question) {
         const container = document.getElementById('canvas-question-container');
@@ -135,7 +136,7 @@ class ProctorEngine {
 
         const canvas = document.createElement('canvas');
         canvas.id = 'active-question-canvas';
-        canvas.className = 'w-full rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900';
+        canvas.className = 'w-full block';
         container.appendChild(canvas);
 
         const ctx = canvas.getContext('2d');
@@ -144,31 +145,30 @@ class ProctorEngine {
         // Container display width
         const displayWidth = container.clientWidth || 800;
 
-        // Prepare text wrapping & measure heights
-        const padding = 28;
+        // Padding and layout metrics
+        const padding = 32;
         const contentWidth = displayWidth - (padding * 2);
 
-        // Calculate prompt lines
+        // Measure prompt lines
         const promptLines = this.wrapText(ctx, question.prompt, contentWidth, '600 18px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif');
-        const promptLineHeight = 28;
+        const promptLineHeight = 30;
         const promptHeight = promptLines.length * promptLineHeight;
 
-        // Code snippet dimensions if present
+        // Code snippet dimensions
         let codeHeight = 0;
         let codeLines = [];
         if (question.code_snippet) {
             codeLines = question.code_snippet.trim().split('\n');
             const codeLineHeight = 22;
-            const codeHeaderHeight = 36;
+            const codeHeaderHeight = 38;
             const codePadding = 24;
             codeHeight = codeHeaderHeight + (codeLines.length * codeLineHeight) + codePadding;
         }
 
-        // Header info bar
         const headerHeight = 44;
         const totalHeight = headerHeight + promptHeight + (codeHeight ? codeHeight + 24 : 0) + (padding * 2);
 
-        // Set high-dpi canvas size
+        // High-DPI canvas sizing
         canvas.width = displayWidth * dpr;
         canvas.height = totalHeight * dpr;
         canvas.style.width = `${displayWidth}px`;
@@ -176,32 +176,31 @@ class ProctorEngine {
 
         ctx.scale(dpr, dpr);
 
-        // 1. Background fill
-        const isDark = document.documentElement.classList.contains('dark');
-        ctx.fillStyle = isDark ? '#0f172a' : '#ffffff';
+        // 1. Pure White Card Background
+        ctx.fillStyle = '#ffffff';
         ctx.fillRect(0, 0, displayWidth, totalHeight);
 
-        // 2. Header Badge: Question Number & Points
+        // 2. Header Badges: Question Number & Points
         let curY = padding;
 
-        // Question tag
-        ctx.fillStyle = '#6366f1'; // Indigo 500
-        this.drawRoundedRect(ctx, padding, curY, 110, 28, 6, true, false);
-        ctx.fillStyle = '#ffffff';
+        // Subtle Royal Indigo Pill for Question tag
+        ctx.fillStyle = '#eef2ff'; // Indigo 50
+        this.drawRoundedRect(ctx, padding, curY, 115, 28, 6, true, false);
+        ctx.fillStyle = '#4338ca'; // Indigo 700
         ctx.font = 'bold 12px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-        ctx.fillText(`QUESTION ${question.index}`, padding + 12, curY + 18);
+        ctx.fillText(`QUESTION ${question.index}`, padding + 14, curY + 18);
 
-        // Points tag
-        ctx.fillStyle = isDark ? '#334155' : '#f1f5f9';
-        this.drawRoundedRect(ctx, padding + 120, curY, 80, 28, 6, true, false);
-        ctx.fillStyle = isDark ? '#94a3b8' : '#475569';
-        ctx.font = '600 12px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-        ctx.fillText(`${question.points} POINT${question.points > 1 ? 'S' : ''}`, padding + 130, curY + 18);
+        // Subtle slate Pill for Points
+        ctx.fillStyle = '#f8fafc'; // Slate 50
+        this.drawRoundedRect(ctx, padding + 125, curY, 80, 28, 6, true, true, '#e2e8f0');
+        ctx.fillStyle = '#475569'; // Slate 600
+        ctx.font = '600 11px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+        ctx.fillText(`${question.points} POINT${question.points > 1 ? 'S' : ''}`, padding + 137, curY + 18);
 
         curY += headerHeight;
 
-        // 3. Question Prompt Text Lines
-        ctx.fillStyle = isDark ? '#f8fafc' : '#0f172a';
+        // 3. Question Prompt Text in Slate-900 (#0F172A)
+        ctx.fillStyle = '#0f172a';
         ctx.font = '600 18px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
         for (const line of promptLines) {
             ctx.fillText(line, padding, curY);
@@ -215,33 +214,33 @@ class ProctorEngine {
             const codeW = contentWidth;
             const codeH = codeHeight;
 
-            // Terminal background card
-            ctx.fillStyle = '#0b1120'; // Slate 950
-            this.drawRoundedRect(ctx, codeX, curY, codeW, codeH, 10, true, false);
+            // Terminal container
+            ctx.fillStyle = '#0f172a'; // Deep slate 900
+            this.drawRoundedRect(ctx, codeX, curY, codeW, codeH, 10, true, true, '#1e293b');
 
-            // Terminal window dots (Red, Yellow, Green)
-            ctx.fillStyle = '#ef4444';
-            this.drawCircle(ctx, codeX + 16, curY + 18, 5);
-            ctx.fillStyle = '#f59e0b';
-            this.drawCircle(ctx, codeX + 32, curY + 18, 5);
-            ctx.fillStyle = '#10b981';
-            this.drawCircle(ctx, codeX + 48, curY + 18, 5);
+            // Window dots (Subtle muted red, amber, green)
+            ctx.fillStyle = '#f87171';
+            this.drawCircle(ctx, codeX + 16, curY + 19, 4.5);
+            ctx.fillStyle = '#fbbf24';
+            this.drawCircle(ctx, codeX + 30, curY + 19, 4.5);
+            ctx.fillStyle = '#34d399';
+            this.drawCircle(ctx, codeX + 44, curY + 19, 4.5);
 
             // Language badge
-            ctx.fillStyle = '#64748b';
-            ctx.font = 'bold 11px monospace';
-            ctx.fillText((question.language || 'code').toUpperCase(), codeX + codeW - 60, curY + 22);
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = 'bold 11px "JetBrains Mono", monospace';
+            ctx.fillText((question.language || 'code').toUpperCase(), codeX + codeW - 60, curY + 23);
 
             // Divider line
             ctx.strokeStyle = '#1e293b';
             ctx.lineWidth = 1;
             ctx.beginPath();
-            ctx.moveTo(codeX, curY + 36);
-            ctx.lineTo(codeX + codeW, curY + 36);
+            ctx.moveTo(codeX, curY + 38);
+            ctx.lineTo(codeX + codeW, curY + 38);
             ctx.stroke();
 
             // Code lines rendering with syntax accents
-            let codeLineY = curY + 58;
+            let codeLineY = curY + 60;
             const codeLineHeight = 22;
 
             for (let i = 0; i < codeLines.length; i++) {
@@ -250,7 +249,7 @@ class ProctorEngine {
 
                 // Gutter line number
                 ctx.fillStyle = '#475569';
-                ctx.font = '13px "JetBrains Mono", Consolas, "Courier New", monospace';
+                ctx.font = '13px "JetBrains Mono", Consolas, monospace';
                 ctx.fillText(lineNum, codeX + 16, codeLineY);
 
                 // Code line text
@@ -260,11 +259,8 @@ class ProctorEngine {
         }
     }
 
-    /**
-     * Render line of code with syntax token highlights into canvas pixels.
-     */
     renderSyntaxLine(ctx, line, x, y) {
-        ctx.font = '13px "JetBrains Mono", Consolas, "Courier New", monospace';
+        ctx.font = '13px "JetBrains Mono", Consolas, monospace';
         const keywords = ['function', 'class', 'public', 'private', 'return', 'const', 'let', 'var', 'if', 'else', 'async', 'await', 'import', 'from', 'new', 'try', 'catch', 'throw', 'foreach', 'as', 'use'];
 
         const parts = line.split(/(\s+|[(){}[\];,.<>=!+\-*/&|:])/);
@@ -276,15 +272,15 @@ class ProctorEngine {
             if (keywords.includes(part.trim())) {
                 ctx.fillStyle = '#38bdf8'; // Sky blue keyword
             } else if (/^['"].*['"]$/.test(part.trim()) || part.includes("'") || part.includes('"')) {
-                ctx.fillStyle = '#34d399'; // Emerald green string
+                ctx.fillStyle = '#34d399'; // Emerald string
             } else if (/^\d+$/.test(part.trim())) {
-                ctx.fillStyle = '#f59e0b'; // Amber number
+                ctx.fillStyle = '#fbbf24'; // Amber number
             } else if (part.startsWith('//') || part.startsWith('#')) {
                 ctx.fillStyle = '#64748b'; // Slate comment
             } else if (/[(){}[\];,]/.test(part)) {
                 ctx.fillStyle = '#94a3b8'; // Grey punctuation
             } else {
-                ctx.fillStyle = '#e2e8f0'; // Light text
+                ctx.fillStyle = '#f8fafc'; // Crisp white text
             }
 
             ctx.fillText(part, curX, y);
@@ -312,7 +308,7 @@ class ProctorEngine {
         return lines;
     }
 
-    drawRoundedRect(ctx, x, y, width, height, radius, fill = true, stroke = false) {
+    drawRoundedRect(ctx, x, y, width, height, radius, fill = true, stroke = false, strokeColor = '#cbd5e1') {
         ctx.beginPath();
         ctx.moveTo(x + radius, y);
         ctx.lineTo(x + width - radius, y);
@@ -325,7 +321,11 @@ class ProctorEngine {
         ctx.quadraticCurveTo(x, y, x + radius, y);
         ctx.closePath();
         if (fill) ctx.fill();
-        if (stroke) ctx.stroke();
+        if (stroke) {
+            ctx.strokeStyle = strokeColor;
+            ctx.lineWidth = 1;
+            ctx.stroke();
+        }
     }
 
     drawCircle(ctx, x, y, radius) {
@@ -338,29 +338,24 @@ class ProctorEngine {
      * 3. Robust Client-Side Enforcement Listeners
      */
     setupSecurityListeners() {
-        // Prevent Right-Click Context Menu
         document.addEventListener('contextmenu', (e) => {
             e.preventDefault();
             this.flagInfraction('context_menu_attempt', 'low', 'Right-click context menu prevented.');
             return false;
         });
 
-        // Prevent Text Selection
         document.addEventListener('selectstart', (e) => {
-            // Allow selection inside input fields if any, otherwise block
             if (!['INPUT', 'TEXTAREA'].includes(e.target.tagName)) {
                 e.preventDefault();
                 return false;
             }
         });
 
-        // Prevent Dragging
         document.addEventListener('dragstart', (e) => {
             e.preventDefault();
             return false;
         });
 
-        // Prevent Copy, Cut, Paste
         ['copy', 'cut', 'paste'].forEach((eventName) => {
             document.addEventListener(eventName, (e) => {
                 e.preventDefault();
@@ -369,32 +364,27 @@ class ProctorEngine {
             });
         });
 
-        // Prevent Keyboard Inspection Shortcuts
         window.addEventListener('keydown', (e) => {
             const isCtrlOrCmd = e.ctrlKey || e.metaKey;
 
-            // F12
             if (e.key === 'F12' || e.keyCode === 123) {
                 e.preventDefault();
                 this.flagInfraction('inspect_shortcut_pressed', 'high', 'F12 Developer Tools shortcut pressed.');
                 return false;
             }
 
-            // Ctrl/Cmd + Shift + I/J/C (DevTools)
             if (isCtrlOrCmd && e.shiftKey && ['I', 'i', 'J', 'j', 'C', 'c'].includes(e.key)) {
                 e.preventDefault();
                 this.flagInfraction('inspect_shortcut_pressed', 'high', `Shortcut ${e.key.toUpperCase()} DevTools intercepted.`);
                 return false;
             }
 
-            // Ctrl/Cmd + U (View Source)
             if (isCtrlOrCmd && ['U', 'u'].includes(e.key)) {
                 e.preventDefault();
                 this.flagInfraction('inspect_shortcut_pressed', 'medium', 'View Source shortcut intercepted.');
                 return false;
             }
 
-            // Ctrl/Cmd + S / P
             if (isCtrlOrCmd && ['S', 's', 'P', 'p'].includes(e.key)) {
                 e.preventDefault();
                 this.flagInfraction('tamper_attempt', 'low', `Shortcut ${e.key.toUpperCase()} prevented.`);
@@ -402,19 +392,16 @@ class ProctorEngine {
             }
         });
 
-        // Visibility Change Listener (Tab Switch or Minimized)
         document.addEventListener('visibilitychange', () => {
             if (document.hidden) {
                 this.flagInfraction('visibility_hidden', 'high', 'Candidate switched away from examination tab.');
             }
         });
 
-        // Window Blur Listener (Application Focus Lost)
         window.addEventListener('blur', () => {
             this.flagInfraction('window_blur', 'high', 'Window lost focus to another desktop application or monitor.');
         });
 
-        // Fullscreen Exit Detection
         if (this.enforceFullscreen) {
             document.addEventListener('fullscreenchange', () => {
                 if (!document.fullscreenElement) {
@@ -425,9 +412,6 @@ class ProctorEngine {
         }
     }
 
-    /**
-     * DevTools Docking & Opening Detection
-     */
     setupDevToolsDetection() {
         const threshold = 160;
         let isDevToolsOpen = false;
@@ -447,7 +431,6 @@ class ProctorEngine {
         window.addEventListener('resize', checkDimensions);
         setInterval(checkDimensions, 2000);
 
-        // Console Trap / Debugger Timing Check
         const element = new Image();
         Object.defineProperty(element, 'id', {
             get: () => {
@@ -460,9 +443,6 @@ class ProctorEngine {
         }, 5000);
     }
 
-    /**
-     * Request Fullscreen Helper
-     */
     requestFullscreen() {
         const elem = document.documentElement;
         if (elem.requestFullscreen) {
@@ -476,13 +456,9 @@ class ProctorEngine {
         if (modal) modal.classList.remove('hidden');
     }
 
-    /**
-     * Dispatch Infraction Event to Server & Handle Strikes
-     */
     async flagInfraction(type, severity, details) {
         if (this.isTerminated || this.isSubmitted) return;
 
-        // Throttle identical rapid-fire events (within 2.5s)
         const now = Date.now();
         if (now - this.lastInfractionTime < 2500) {
             return;
@@ -519,19 +495,14 @@ class ProctorEngine {
         }
     }
 
-    /**
-     * Red-Screen Lockout & Automatic Zero-Score Termination
-     */
     triggerDisqualification(reason) {
         this.isTerminated = true;
         clearInterval(this.heartbeatTimer);
         clearInterval(this.countdownTimer);
 
-        // Hide exam wrapper
         const examArea = document.getElementById('exam-active-area');
         if (examArea) examArea.style.display = 'none';
 
-        // Render full-screen Red Security Lockout Banner
         const lockout = document.getElementById('proctor-lockout-screen');
         if (lockout) {
             lockout.classList.remove('hidden');
@@ -539,10 +510,9 @@ class ProctorEngine {
             if (reasonElem) reasonElem.innerText = reason;
         }
 
-        // Auto-redirect to result after 4 seconds
         setTimeout(() => {
             window.location.href = this.resultUrl;
-        }, 4000);
+        }, 3500);
     }
 
     showWarningAlert(message) {
@@ -560,18 +530,17 @@ class ProctorEngine {
     updateStrikesBadge() {
         const badge = document.getElementById('strikes-counter-badge');
         if (badge) {
-            badge.innerText = `${this.strikesCount} / ${this.maxStrikes}`;
-            if (this.strikesCount >= this.maxStrikes - 1) {
-                badge.className = 'px-3 py-1 bg-red-600 text-white rounded-full font-bold text-xs animate-pulse';
+            badge.innerText = `${this.strikesCount} of ${this.maxStrikes}`;
+            if (this.strikesCount >= this.maxStrikes - 1 && this.strikesCount > 0) {
+                badge.className = 'px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200 font-bold text-xs font-mono animate-pulse';
             } else if (this.strikesCount > 0) {
-                badge.className = 'px-3 py-1 bg-amber-500 text-white rounded-full font-bold text-xs';
+                badge.className = 'px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200 font-bold text-xs font-mono';
+            } else {
+                badge.className = 'px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200 font-semibold text-xs font-mono';
             }
         }
     }
 
-    /**
-     * Load Question Data from Backend
-     */
     async loadExamData() {
         try {
             const res = await fetch(`${this.apiUrl}/canvas-data/${this.token}`);
@@ -609,17 +578,24 @@ class ProctorEngine {
         // 1. Render question text & code on Canvas
         this.renderQuestionOnCanvas(q);
 
-        // 2. Render options buttons in DOM
+        // 2. Render options buttons in DOM (Clean Light SaaS Interactive Buttons)
         this.renderOptions(q);
 
         // 3. Update Question indicator
         const counter = document.getElementById('current-question-num');
-        if (counter) counter.innerText = `${index + 1} of ${this.questions.length}`;
+        if (counter) {
+            const currentStr = String(index + 1).padStart(2, '0');
+            const totalStr = String(this.questions.length).padStart(2, '0');
+            counter.innerText = `Question ${currentStr} of ${totalStr}`;
+        }
 
         // 4. Update Nav Buttons
         this.updateNavButtons();
     }
 
+    /**
+     * Clean Light Mode Multiple Choice Interactive Selectors
+     */
     renderOptions(question) {
         const container = document.getElementById('question-options-list');
         if (!container) return;
@@ -635,17 +611,30 @@ class ProctorEngine {
 
             const btn = document.createElement('button');
             btn.type = 'button';
-            btn.className = `w-full text-left p-4 rounded-xl border-2 transition-all flex items-start gap-4 ${
+            btn.className = `group w-full text-left p-4 md:p-5 rounded-2xl border transition-all duration-200 ease-out flex items-center justify-between gap-4 select-none ${
                 isSelected
-                    ? 'border-indigo-600 bg-indigo-50/80 dark:bg-indigo-950/40 text-indigo-900 dark:text-indigo-200'
-                    : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-700 text-slate-700 dark:text-slate-300'
+                    ? 'border-indigo-600 bg-indigo-50/60 text-indigo-950 font-medium ring-2 ring-indigo-600/20 shadow-sm'
+                    : 'border-slate-200/80 bg-white hover:-translate-y-0.5 hover:shadow-md hover:border-indigo-300 text-slate-800 shadow-[0_2px_8px_rgba(0,0,0,0.04)]'
             }`;
 
             btn.innerHTML = `
-                <span class="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm ${
-                    isSelected ? 'bg-indigo-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
-                }">${letter}</span>
-                <span class="pt-1 font-medium leading-relaxed">${opt.text}</span>
+                <div class="flex items-center gap-3.5 flex-1 min-w-0">
+                    <span class="flex-shrink-0 w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs transition-colors duration-200 ${
+                        isSelected
+                            ? 'bg-indigo-600 text-white shadow-sm'
+                            : 'bg-slate-100 text-slate-600 border border-slate-200 group-hover:bg-indigo-50 group-hover:text-indigo-600 group-hover:border-indigo-200'
+                    }">${letter}</span>
+                    <span class="text-xs md:text-sm leading-relaxed">${opt.text}</span>
+                </div>
+                <div class="flex-shrink-0 flex items-center justify-center">
+                    <span class="w-6 h-6 rounded-full flex items-center justify-center transition-all duration-200 ${
+                        isSelected
+                            ? 'bg-indigo-600 text-white scale-100 opacity-100 shadow-sm'
+                            : 'border-2 border-slate-200 text-transparent scale-90 opacity-40 group-hover:border-indigo-300'
+                    }">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                    </span>
+                </div>
             `;
 
             btn.onclick = () => {
@@ -669,12 +658,12 @@ class ProctorEngine {
 
             const item = document.createElement('button');
             item.type = 'button';
-            item.className = `w-9 h-9 rounded-lg font-bold text-xs flex items-center justify-center transition-all ${
+            item.className = `w-9 h-9 rounded-lg font-bold text-xs flex items-center justify-center transition ${
                 isCurrent
-                    ? 'ring-2 ring-indigo-500 bg-indigo-600 text-white'
+                    ? 'bg-indigo-600 text-white shadow-sm ring-2 ring-indigo-300'
                     : isAnswered
-                    ? 'bg-emerald-500 text-white'
-                    : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200'
+                    ? 'bg-emerald-600 text-white'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200/80'
             }`;
             item.innerText = idx + 1;
             item.onclick = () => this.loadQuestion(idx);
@@ -731,6 +720,7 @@ class ProctorEngine {
      */
     startCountdownTimer() {
         const timerElem = document.getElementById('timer-display');
+        const timerBadge = document.getElementById('timer-badge-container');
 
         const updateDisplay = () => {
             if (this.remainingSeconds <= 0) {
@@ -747,8 +737,21 @@ class ProctorEngine {
             if (timerElem) {
                 timerElem.innerText = `${format(hours)}:${format(minutes)}:${format(seconds)}`;
 
+                // Shifts to warm amber alert only when under 5 minutes remain
                 if (this.remainingSeconds <= 300) {
-                    timerElem.classList.add('text-red-600', 'animate-pulse');
+                    timerElem.classList.remove('text-slate-900');
+                    timerElem.classList.add('text-amber-600', 'animate-pulse');
+                    if (timerBadge) {
+                        timerBadge.classList.add('bg-amber-50', 'border-amber-200', 'ring-2', 'ring-amber-500/10');
+                        timerBadge.classList.remove('bg-slate-50', 'border-slate-200');
+                    }
+                } else {
+                    timerElem.classList.remove('text-amber-600', 'animate-pulse');
+                    timerElem.classList.add('text-slate-900');
+                    if (timerBadge) {
+                        timerBadge.classList.remove('bg-amber-50', 'border-amber-200', 'ring-2', 'ring-amber-500/10');
+                        timerBadge.classList.add('bg-slate-50', 'border-slate-200');
+                    }
                 }
             }
 
@@ -780,7 +783,6 @@ class ProctorEngine {
                 } else if (!data.active && data.status === 'completed') {
                     window.location.href = data.redirect_url;
                 } else if (data.remaining_seconds !== undefined) {
-                    // Sync countdown with authoritative server time
                     this.remainingSeconds = data.remaining_seconds;
                     this.strikesCount = data.strikes_count;
                     this.updateStrikesBadge();
@@ -788,12 +790,9 @@ class ProctorEngine {
             } catch (err) {
                 console.warn('Heartbeat synchronization pending...');
             }
-        }, 10000); // Sync every 10 seconds
+        }, 10000);
     }
 
-    /**
-     * Submit Examination
-     */
     submitFinalExam(notice = null) {
         if (this.isSubmitted) return;
         this.isSubmitted = true;

@@ -227,13 +227,13 @@ class DatabaseSeeder extends Seeder
                     [
                         'type' => 'features',
                         'title' => 'Enterprise Anti-Cheat Architecture',
-                        'raw_items' => "Canvas Pixel Buffer Rendering | Question prompts and code snippets are rendered inside HTML5 canvas pixel buffers, leaving no readable DOM text for AI browser extensions or screen scrapers to intercept.\nLive Dynamic Forensic Watermark | Repeating diagonal watermark stamps the candidate's legal name, student ID, IP address, and live ticking UTC timestamp across all screen pixels to make photo leaks instantly traceable.\nSynchronized Waiting Room | Candidates assemble in real time awaiting proctor authorization. One click on the admin dashboard releases questions simultaneously with zero page reloads.\nEnforced Client Hardening | Intercepts F12 inspect shortcuts, docked DevTools panels, tab visibility loss, window blurs, and right-click context menus with automatic strike scoring.",
+                        'raw_items' => "Canvas Pixel Buffer Rendering | Question prompts and code snippets are rendered inside HTML5 canvas pixel buffers, leaving no readable DOM text for AI browser extensions or screen scrapers to intercept.\nLive Dynamic Forensic Watermark | Repeating diagonal watermark stamps the candidate's legal name, student ID, IP address, and live ticking UTC timestamp across all screen pixels to make photo leaks instantly traceable.\nSynchronized Waiting Room | Candidates assemble in real time awaiting proctor authorization. Questions release simultaneously with zero page reloads.\nEnforced Client Hardening | Intercepts F12 inspect shortcuts, docked DevTools panels, tab visibility loss, window blurs, and right-click context menus with automatic strike scoring.",
                     ],
                     [
                         'type' => 'cta',
-                        'title' => 'University-Wide Proctored Testing Management',
-                        'message' => 'Zero-hardcoding modular CMS allows creating assessments, configuring SMTP email dispatching, and monitoring telemetry in real time.',
-                        'button_text' => 'Access Proctor Command Console',
+                        'title' => 'Need Testing Accommodations or Candidate Support?',
+                        'message' => 'Reach out to the University Examination Board for accommodation requests, hardware checks, or scheduling questions.',
+                        'button_text' => 'Submit Candidate Inquiry',
                     ]
                 ],
             ]
