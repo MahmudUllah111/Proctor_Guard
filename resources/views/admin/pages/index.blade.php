@@ -1,81 +1,86 @@
 @extends('layouts.admin')
 
-@section('title', 'Page Builder CMS')
+@section('title', 'Page Builder')
 @section('page_title', 'Widget-Based Page Builder')
-@section('page_subtitle', 'Manage landing pages, custom URLs, and modular layout widgets without code touch')
+@section('page_subtitle', 'Manage landing pages, custom URLs, and modular layout widgets without code changes')
 
 @section('topbar_actions')
-    <a href="{{ route('admin.pages.create') }}" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs rounded-xl shadow-sm transition flex items-center gap-1.5">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-        Create New Page
+    <a href="{{ route('admin.pages.create') }}" class="btn-primary">
+        <x-icon name="plus" class="w-3.5 h-3.5" />
+        <span>Create page</span>
     </a>
 @endsection
 
 @section('content')
 <div class="space-y-6">
 
-    <div class="bg-white border border-slate-200/80 rounded-2xl shadow-sm overflow-hidden">
-        <div class="p-4 border-b border-slate-100 flex items-center justify-between">
-            <h3 class="font-bold text-sm text-slate-900">Published & Draft CMS Pages</h3>
-            <span class="text-xs text-slate-500">Total: {{ $pages->count() }}</span>
+    <div class="card overflow-hidden">
+        <div class="card-header">
+            <div>
+                <h3 class="card-title">Published & Draft CMS Pages</h3>
+                <p class="card-subtitle">Manage public routes and dynamic landing page compositions</p>
+            </div>
+            <span class="text-xs text-slate-500 font-medium">Total: <span class="num text-slate-900 font-semibold">{{ $pages->count() }}</span></span>
         </div>
 
         <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs">
+            <table class="data-table">
                 <thead>
-                    <tr class="bg-slate-50 text-slate-600 border-b border-slate-200">
-                        <th class="py-3.5 px-6 font-semibold">Page Title</th>
-                        <th class="py-3.5 px-4 font-semibold">Slug / URL</th>
-                        <th class="py-3.5 px-4 font-semibold">Widgets Count</th>
-                        <th class="py-3.5 px-4 font-semibold">Status</th>
-                        <th class="py-3.5 px-6 font-semibold text-right">Actions</th>
+                    <tr>
+                        <th>Page Title</th>
+                        <th>Slug / Route</th>
+                        <th>Widgets</th>
+                        <th>Status</th>
+                        <th class="text-right">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-100">
+                <tbody>
                     @forelse($pages as $page)
-                        <tr class="hover:bg-slate-50/50 transition">
-                            <td class="py-4 px-6 font-semibold text-slate-900">
+                        <tr>
+                            <td>
                                 <div class="flex items-center gap-2">
                                     @if($page->is_home)
-                                        <span class="px-2 py-0.5 rounded bg-indigo-50 border border-indigo-200 text-indigo-700 font-bold text-[10px]">HOMEPAGE</span>
+                                        <span class="pill-indigo">HOMEPAGE</span>
                                     @endif
-                                    <span class="text-slate-900">{{ $page->title }}</span>
+                                    <span class="font-semibold text-slate-900">{{ $page->title }}</span>
                                 </div>
                             </td>
-                            <td class="py-4 px-4 font-mono text-indigo-700">
-                                @if($page->is_home)
-                                    /
-                                @else
-                                    /page/{{ $page->slug }}
-                                @endif
+                            <td>
+                                <span class="token-chip">
+                                    @if($page->is_home)
+                                        /
+                                    @else
+                                        /page/{{ $page->slug }}
+                                    @endif
+                                </span>
                             </td>
-                            <td class="py-4 px-4 text-slate-600">
-                                {{ count($page->content_widgets ?? []) }} Widgets
+                            <td class="num text-slate-600">
+                                {{ count($page->content_widgets ?? []) }} widgets
                             </td>
-                            <td class="py-4 px-4">
+                            <td>
                                 @if($page->status === 'published')
-                                    <span class="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold text-[10px]">Published</span>
+                                    <span class="pill-emerald">Published</span>
                                 @else
-                                    <span class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 border border-slate-200 font-semibold text-[10px]">Draft</span>
+                                    <span class="pill-slate">Draft</span>
                                 @endif
                             </td>
-                            <td class="py-4 px-6 text-right space-x-2 font-medium">
-                                <a href="{{ $page->is_home ? route('home') : route('public.page', $page->slug) }}" target="_blank" class="text-slate-500 hover:text-slate-800">View Live</a>
-                                <span class="text-slate-300">•</span>
-                                <a href="{{ route('admin.pages.edit', $page) }}" class="text-indigo-600 hover:text-indigo-700 font-semibold">Edit Widgets</a>
-                                @if(!$page->is_home)
-                                    <span class="text-slate-300">•</span>
-                                    <form action="{{ route('admin.pages.destroy', $page) }}" method="POST" class="inline" onsubmit="return confirm('Delete this page?')">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="text-rose-600 hover:text-rose-700">Delete</button>
-                                    </form>
-                                @endif
+                            <td class="text-right">
+                                <div class="icon-group">
+                                    <x-icon-button :href="$page->is_home ? route('home') : route('public.page', $page->slug)" icon="external-link" label="View live" target="_blank" />
+                                    <x-icon-button :href="route('admin.pages.edit', $page)" icon="pencil" label="Edit widgets" tone="primary" />
+                                    @if(!$page->is_home)
+                                        <form action="{{ route('admin.pages.destroy', $page) }}" method="POST" class="inline" onsubmit="return confirm('Delete this page?')">
+                                            @csrf
+                                            @method('DELETE')
+                                            <x-icon-button type="submit" icon="trash-2" label="Delete page" tone="danger" />
+                                        </form>
+                                    @endif
+                                </div>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="py-8 text-center text-slate-400">No CMS pages found.</td>
+                            <td colspan="5" class="py-10 text-center text-slate-400">No CMS pages found.</td>
                         </tr>
                     @endforelse
                 </tbody>
